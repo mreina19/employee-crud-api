@@ -37,7 +37,8 @@ See [CHANGELOG.md](./CHANGELOG.md) for a history of changes to this project.
 | POST | `/register/` | Creates a new user |
 | GET | `/users/` | Returns all users |
 | GET | `/users/{user_id}` | Returns a user by ID |
-| PUT | `/users/{user_id}` | Updates an existing user |
+| PUT | `/users/{user_id}` | Fully replaces an existing user |
+| PATCH | `/users/{user_id}` | Partially updates an existing user |
 | DELETE | `/users/{user_id}` | Deletes a user |
 
 ## Requirements
@@ -113,6 +114,7 @@ http://localhost:8000/docs
 - Passwords are hashed with bcrypt before being stored. Plain text passwords are never saved.
 - `role` must be one of: `admin`, `manager`, `developer`, `designer`, `analyst`, `hr`.
 - `first_name` and `last_name` are limited to 50 characters, `email` to 70 characters, `password` to 72 characters (bcrypt limit).
+- `is_active` can be set through `POST /register/`, `PUT /users/{user_id}`, `PATCH /users/{user_id}`, or directly in the database.
 - Users can be deactivated (`is_active = false`) without being deleted, either through `POST /register/`, `PUT /users/{user_id}`, or directly in the database.
 - All user management routes require admin privileges. Non-admin users will receive a `403 Forbidden` response.
 - The first admin user must be set manually in the database. After that, admins can create and manage other users through the API.
