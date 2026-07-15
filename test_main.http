@@ -1,0 +1,74 @@
+### Login
+### Note: the first admin user must be set manually in the database
+POST http://localhost:8000/token
+Content-Type: application/x-www-form-urlencoded
+
+username=admin@company.com&password=Admin@1234
+
+###
+
+### Login as non-admin
+POST http://localhost:8000/token
+Content-Type: application/x-www-form-urlencoded
+
+username=fernando.alberto@company.com&password=Fernando@1234
+
+###
+
+### Get current user profile
+GET http://localhost:8000/profile
+Authorization: Bearer {{token}}
+
+###
+
+### Verify token
+GET http://localhost:8000/verify-token
+Authorization: Bearer {{token}}
+
+###
+
+### Create a new user (admin only)
+POST http://localhost:8000/register/
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "first_name": "Fernando",
+  "last_name": "Alberto",
+  "email": "fernando.alberto@company.com",
+  "role": "manager",
+  "password": "Fernando@1234"
+}
+
+###
+
+### Get all users (admin only)
+GET http://localhost:8000/users/
+Authorization: Bearer {{token}}
+
+###
+
+### Get user by ID (admin only)
+GET http://localhost:8000/users/1
+Authorization: Bearer {{token}}
+
+###
+
+### Update a user (admin only)
+PUT http://localhost:8000/users/1
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+  "first_name": "James",
+  "last_name": "Carter",
+  "email": "james.carter@company.com",
+  "role": "developer",
+  "password": "James@1234"
+}
+
+###
+
+### Delete a user (admin only)
+DELETE http://localhost:8000/users/1
+Authorization: Bearer {{token}}
