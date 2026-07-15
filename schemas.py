@@ -43,15 +43,19 @@ class UserUpdate(BaseModel):
     first_name: str = Field(min_length=1, max_length=50)
     last_name: str = Field(min_length=1, max_length=50)
     email: EmailStr = Field(max_length=70)
-
-    # UserRoles instead of str. The role can only be one of the predefined values
     role: UserRoles
-
-    # Gets hashed before being stored, it is never saved as it is.
-    # By capping 'max_length', the schema reject overly long passwords before they ever reach bcrypt (which has a 72 bytes max)
     password: str = Field(min_length=8, max_length=72)
-
     is_active: bool = True
+
+#Schema used when PATCHING (partially updating) a user
+# All fields are optional. Only the ones the client actually includes in the request are validated and applied
+class UserPatch(BaseModel):
+    first_name: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    last_name: Optional[str] = Field(default=None, min_length=1, max_length=50)
+    email: Optional[EmailStr] = Field(default=None, max_length=70)
+    role: Optional[UserRoles] = None
+    password: Optional[str] = Field(default=None, min_length=8, max_length=72)
+    is_active: Optional[bool] = None
 
 #Schema used when RETURNING a user. Includes "id" because the DB has already assigned it at this point
 #There are no Fields() here, because this data is already validated and stored

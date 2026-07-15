@@ -26,7 +26,7 @@ import logging
 import inspect
 
 from dependencies import get_current_active_user, require_admin
-from schemas import UserResponse, UserAdd, UserUpdate, Token
+from schemas import UserResponse, UserAdd, UserUpdate, UserPatch, Token
 from models import User
 from database import Base, engine, get_db
 from auth import get_pwd_hash, verify_pwd, TOKEN_EXPIRES, create_access_token
@@ -152,8 +152,8 @@ def get_user(user_id:int, current_user: User = Depends(require_admin), db:Sessio
             logger.warning(f"{method}: User '{user_id}' not found.")
 
             raise HTTPException(
-                status_code= 404,
-                detail= f"User '{user_id}' not found."
+                status_code=404,
+                detail=f"User '{user_id}' not found."
             )
 
         logger.info(f"{method}: User '{user_id}' information retrieved successfully.")
@@ -185,8 +185,8 @@ def register_user(user: UserAdd, current_user: User = Depends(require_admin), db
             logger.warning(f"{method}: Email '{user.email}' already exists.")
 
             raise HTTPException (
-                status_code= 409,
-                detail= f"Email '{user.email}' already exists."
+                status_code=409,
+                detail=f"Email '{user.email}' already exists."
             )
 
         #Gets the user hashed password
@@ -250,7 +250,7 @@ def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depend
         access_token_expires = timedelta(minutes=TOKEN_EXPIRES)
 
         access_token = create_access_token(
-            data={"sub": user.email}, expires_delta=access_token_expires
+            data= {"sub": user.email}, expires_delta=access_token_expires
         )
 
         logger.info(f"{method}: User with email '{user.email}' logged in successfully.")
@@ -284,8 +284,8 @@ def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(req
             logger.warning(f"{method}: User '{user_id}' not found.")
 
             raise HTTPException(
-                status_code= 404,
-                detail= f"User '{user_id}' not found."
+                status_code=404,
+                detail=f"User '{user_id}' not found."
             )
 
         #Checks if the email is already in use by another user.
@@ -313,6 +313,65 @@ def update_user(user_id: int, user: UserUpdate, current_user: User = Depends(req
 
         logger.info(f"{method}: User '{user_id}' updated successfully.")
 
+        return db_user
+
+    except HTTPException:
+        raise
+
+    except Exception as e:
+        logger.error(f"{method}: {e}")
+
+        raise HTTPException(
+            status_code=500,
+            detail=str(e)
+        )
+
+#Registers a PATCH route at the path "/users/{user_id}"
+#Partially updates a user. Only fields included in the request body are changed. Admin privileges
+@app.patch("/users/{user_id}", response_model=UserResponse)
+def patch_user(user_id: int, user: UserPatch, current_user: User = Depends(require_admin), db: Session = Depends(get_db)):
+    try:
+        method = inspect.currentframe().f_code.co_name
+
+        #Searches the 'users' table for the first record where id matches user_id and returns it
+        db_user = db.query(User).filter(User.id == user_id).first()
+
+        if not db_user:
+            logger.warning(f"{method}: User '{user_id}' not found.")
+            raise HTTPException(status_code=404, detail=f"User '{user_id}' not found.")
+
+        #'exclude_unset=True' keeps only the fields the client actually included in the request.
+        update_data = user.model_dump(exclude_unset= True)
+
+        #Checks if the email is already in use by another user, accounting for the email possibly not being part of this PATCH request at all.
+        if "email" in update_data:
+            if db.query(User).filter(func.lower(User.email) == update_data["email"].lower(), User.id != user_id).first():
+                logger.warning(f"{method}: Email '{update_data['email']}' already exists.")
+                raise HTTPException(status_code=409, detail=f"Email '{update_data['email']}' already exists.")
+
+            db_user.email = update_data["email"]
+
+        if "first_name" in update_data:
+            db_user.first_name = update_data["first_name"]
+
+        if "last_name" in update_data:
+            db_user.last_name = update_data["last_name"]
+
+        if "role" in update_data:
+            db_user.role = update_data["role"]
+
+        if "is_active" in update_data:
+            db_user.is_active = update_data["is_active"]
+
+        #Hashes the new password before updating.
+        # Only re-hashed if the client actually included a new password in the request.
+        if "password" in update_data:
+            db_user.hashed_password = get_pwd_hash(update_data["password"])
+
+        db.commit()
+        db.refresh(db_user)
+
+        logger.info(f"{method}: User '{user_id}' partially updated successfully.")
         return db_user
 
     except HTTPException:
