@@ -38,8 +38,6 @@ pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 #Tells FastAPI where the clients get a token, so it knows how to extract and validate it from requests
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
 
-
-
 #Checks whether a login attempt is correct
 def verify_pwd(plain_pwd: str, hashed_pwd: str)-> bool:
     return pwd_context.verify(plain_pwd, hashed_pwd)
@@ -57,7 +55,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta]=None):
     if expires_delta:
         expire = datetime.now(timezone.utc) + expires_delta
     else:
-        expire = datetime.now(timezone.utc) + timedelta(minutes=15)
+        expire = datetime.now(timezone.utc) + timedelta(TOKEN_EXPIRES)      #Falls back to the configured 'TOKEN_EXPIRES' instead of a hardcoded value
 
 
     #Adds the expiry timestamp into the token's payload.
