@@ -1,3 +1,7 @@
+## v1.1.1 Minor Fix (24th July 2026)
+
+- `create_access_token` now falls back to `TOKEN_EXPIRES` instead of a hardcoded value
+
 ## v1.1.0 Partial Updates (PATCH) (15th July 2026)
 
 - Added PATCH endpoint for partially updating users
